@@ -16,7 +16,8 @@ func main() {
 	defer db.Close()
 
 	userRepository := repositories.NewUserRespository(db)
-	authService := services.NewAuthService(userRepository)
+	refreshTokenRepo := repositories.NewRefreshTokenRepository(db)
+	authService := services.NewAuthService(userRepository, refreshTokenRepo)
 
 	http.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
 		controllers.RegisterHandler(w, r, authService)

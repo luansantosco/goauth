@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"os"
 	"time"
@@ -25,4 +27,13 @@ func GenerateJWT(user *models.User) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(secret))
+}
+
+func GenerateRandomToken() (string, error) {
+	bytes := make([]byte, 32)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(bytes), nil
 }

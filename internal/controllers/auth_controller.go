@@ -62,7 +62,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request, s *services.AuthServic
 		return
 	}
 
-	token, err := s.Authenticate(req.Username, req.Password)
+	accessToken, refreshToken, err := s.Authenticate(req.Username, req.Password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
@@ -70,6 +70,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request, s *services.AuthServic
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
-		"token": token,
+		"access_token":  accessToken,
+		"refresh_token": refreshToken,
 	})
 }
