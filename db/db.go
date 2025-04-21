@@ -2,7 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"os"
 
@@ -15,25 +14,15 @@ var Db *sql.DB
 func ConnectDB() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Println("Arquivo .env não encontrado. Lendo variáveis diretamente do ambiente...")
+		log.Println("Arquivo .env não encontrado. Lendo variáveis diretamente...")
 	}
 
-	host := os.Getenv("DB_HOST")
-	port := os.Getenv("DB_PORT")
-	user := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASSWORD")
-	dbname := os.Getenv("DB_NAME")
-
-	if host == "" || port == "" || user == "" || password == "" || dbname == "" {
-		log.Fatal("Variáveis de ambiente para conexão com banco de dados não configuradas corretamente.")
+	databaseUrl := os.Getenv("DATABASE_URL")
+	if databaseUrl == "" {
+		log.Fatal("DATABASE_URL não configurada.")
 	}
 
-	connStr := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname,
-	)
-
-	Db, err = sql.Open("postgres", connStr)
+	Db, err = sql.Open("postgres", databaseUrl)
 	if err != nil {
 		log.Fatal("Erro ao abrir conexão com banco:", err)
 	}

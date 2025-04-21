@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"goauth/controllers"
 	"goauth/db"
 	"log"
 	"net/http"
@@ -10,9 +10,7 @@ import (
 func main() {
 	db.ConnectDB()
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "GoAuth rodando! 🚀")
-	})
+	http.HandleFunc("/register", controllers.RegisterHandler)
 
 	log.Println("Servidor rodando na porta 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
