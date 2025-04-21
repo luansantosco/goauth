@@ -21,3 +21,7 @@ func GetEnv(key, fallback string) string {
 	}
 	return value
 }
+
+func IsProduction() bool {
+	return os.Getenv("ENV") == "production"
+}

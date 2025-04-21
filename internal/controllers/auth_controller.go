@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"goauth/configs"
 	"goauth/internal/services"
 	"net/http"
 )
@@ -68,39 +69,79 @@ func LoginHandler(w http.ResponseWriter, r *http.Request, s *services.AuthServic
 		return
 	}
 
+	http.SetCookie(w, &http.Cookie{
+		Name:     "access_token",
+		Value:    accessToken,
+		HttpOnly: true,
+		Secure:   configs.IsProduction(),
+		Path:     "/",
+		SameSite: http.SameSiteStrictMode,
+	})
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		HttpOnly: true,
+		Secure:   configs.IsProduction(),
+		Path:     "/",
+		SameSite: http.SameSiteStrictMode,
+	})
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
-		"access_token":  accessToken,
-		"refresh_token": refreshToken,
+		"message": "Logged in successfully",
 	})
 }
 
 func RefreshHandler(w http.ResponseWriter, r *http.Request, s *services.AuthService) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	type refreshRequest struct {
-		RefreshToken string `json:"refresh_token"`
-	}
-
-	var req refreshRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil || req.RefreshToken == "" {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
-		return
-	}
-
-	newAccessToken, newRefreshToken, err := s.Refresh(req.RefreshToken)
+	cookie, err := r.Cookie("refresh_token")
 	if err != nil {
-		http.Error(w, "Invalid or expired refresh token", http.StatusUnauthorized)
+		http.Error(w, "Refresh token not found", http.StatusUnauthorized)
 		return
 	}
+
+	newAccessToken, newRefreshToken, err := s.Refresh(cookie.Value)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "access_token",
+		Value:    newAccessToken,
+		HttpOnly: true,
+		Secure:   configs.IsProduction(),
+		Path:     "/",
+		SameSite: http.SameSiteStrictMode,
+	})
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    newRefreshToken,
+		HttpOnly: true,
+		Secure:   configs.IsProduction(),
+		Path:     "/",
+		SameSite: http.SameSiteStrictMode,
+	})
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
-		"access_token":  newAccessToken,
-		"refresh_token": newRefreshToken,
+		"message": "Tokens refreshed successfully",
 	})
+}
+
+func LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   configs.IsProduction(),
+		SameSite: http.SameSiteStrictMode,
+	})
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"message": "Logged out successfully"}`))
 }
