@@ -67,3 +67,47 @@ func (s *AuthService) Authenticate(username, password string) (accessToken, refr
 
 	return accessToken, refreshToken, nil
 }
+
+func (s *AuthService) Refresh(refreshToken string) (newAccessToken string, newRefreshToken string, err error) {
+	// 1. Validar o refresh token recebido
+	userID, err := s.RefreshTokenRepo.Validate(refreshToken)
+	if err != nil {
+		return "", "", errors.New("invalid or expired refresh token")
+	}
+
+	// 2. Buscar o usuário no banco usando o ID recuperado
+	user, err := s.UserRepo.FindByID(userID)
+	if err != nil {
+		return "", "", errors.New("user not found")
+	}
+
+	// 3. Gerar novo Access Token JWT
+	newAccessToken, err = utils.GenerateJWT(user)
+	if err != nil {
+		return "", "", err
+	}
+
+	// 4. Gerar novo Refresh Token
+	newRefreshToken, err = utils.GenerateRefreshToken()
+	if err != nil {
+		return "", "", err
+	}
+
+	// 5. Revogar o Refresh Token antigo
+	err = s.RefreshTokenRepo.Revoke(refreshToken)
+	if err != nil {
+		return "", "", err
+	}
+
+	// 6. Salvar o novo Refresh Token no banco
+	issuedAt := time.Now()
+	expiresAt := issuedAt.Add(7 * 24 * time.Hour) // 7 dias
+
+	err = s.RefreshTokenRepo.Save(user.ID, newRefreshToken, issuedAt, expiresAt)
+	if err != nil {
+		return "", "", err
+	}
+
+	// 7. Retornar os novos tokens para o usuário
+	return newAccessToken, newRefreshToken, nil
+}

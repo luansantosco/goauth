@@ -26,6 +26,10 @@ func main() {
 		controllers.LoginHandler(w, r, authService)
 	})
 
+	http.HandleFunc("/refresh", func(w http.ResponseWriter, r *http.Request) {
+		controllers.RefreshHandler(w, r, authService)
+	})
+
 	http.HandleFunc("/profile", middlewares.JWTMiddleware(controllers.ProfileHandler))
 
 	log.Println("✅ Server running on port 8080")

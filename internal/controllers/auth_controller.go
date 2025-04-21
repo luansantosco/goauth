@@ -74,3 +74,33 @@ func LoginHandler(w http.ResponseWriter, r *http.Request, s *services.AuthServic
 		"refresh_token": refreshToken,
 	})
 }
+
+func RefreshHandler(w http.ResponseWriter, r *http.Request, s *services.AuthService) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	type refreshRequest struct {
+		RefreshToken string `json:"refresh_token"`
+	}
+
+	var req refreshRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil || req.RefreshToken == "" {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	newAccessToken, newRefreshToken, err := s.Refresh(req.RefreshToken)
+	if err != nil {
+		http.Error(w, "Invalid or expired refresh token", http.StatusUnauthorized)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"access_token":  newAccessToken,
+		"refresh_token": newRefreshToken,
+	})
+}
