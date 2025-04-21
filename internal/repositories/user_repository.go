@@ -22,3 +22,37 @@ func (r *UserRepository) Save(user *models.User) error {
 	)
 	return err
 }
+
+func (r *UserRepository) FindByUsername(username string) (*models.User, error) {
+	var user models.User
+	err := r.DB.QueryRow(
+		"SELECT id, username, password_hash, role, created_at FROM users WHERE username = $1",
+		username,
+	).Scan(
+		&user.ID,
+		&user.Username,
+		&user.PasswordHash,
+		&user.Role,
+		&user.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (r *UserRepository) FindByID(id int) (*models.User, error) {
+	var user models.User
+	err := r.DB.QueryRow(`
+		SELECT id, username, password_hash, role, created_at
+		FROM users
+		WHERE id = $1
+	`, id).Scan(&user.ID, &user.Username, &user.PasswordHash, &user.Role, &user.CreatedAt)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
