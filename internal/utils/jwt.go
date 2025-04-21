@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"os"
 	"time"
 
@@ -12,11 +13,11 @@ import (
 func GenerateJWT(user *models.User) (string, error) {
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
-		secret = "defaultsecret"
+		return "", errors.New("JWT_SECRET not set")
 	}
 
 	claims := jwt.MapClaims{
-		"user_id":  user.ID,
+		"userid":   user.ID,
 		"username": user.Username,
 		"role":     user.Role,
 		"exp":      time.Now().Add(time.Hour * 1).Unix(),

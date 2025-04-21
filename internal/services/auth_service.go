@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"goauth/internal/models"
 	"goauth/internal/repositories"
 	"goauth/internal/utils"
@@ -26,4 +27,22 @@ func (s *AuthService) Register(username, password string) error {
 		Role:         "user",
 	}
 	return s.UserRepo.Save(user)
+}
+
+func (s *AuthService) Authenticate(username, password string) (string, error) {
+	user, err := s.UserRepo.FindByUsername(username)
+	if err != nil {
+		return "", err
+	}
+
+	if !utils.CheckPasswordHash(password, user.PasswordHash) {
+		return "", errors.New("invalid username or password")
+	}
+
+	token, err := utils.GenerateJWT(user)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
 }
