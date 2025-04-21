@@ -19,7 +19,7 @@ Um serviço de autenticação robusto desenvolvido em Go, utilizando PostgreSQL 
 
 1. Clone o repositório:
 ```bash
-git clone https://github.com/seu-usuario/GoAuth.git
+git clone https://github.com/luansantosco/GoAuth.git
 cd GoAuth
 ```
 
